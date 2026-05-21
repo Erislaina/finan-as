@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finance Pro BI - Dashboard</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        /* CSS PRINCIPAL - ESTILO POWER BI / DARK MODE */
+        :root {
+            --bg-body: #0f111a;
+            --bg-sidebar: #161925;
+            --gray-dark: #232736;
+            --purple-neon: #8a2be2;
+            --emerald: #50c878;
+            --exit-red: #ff4d4d;
+            --glass: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: #e1e1e1;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* SIDEBAR - ESTRUTURA DE PASTAS */
+        .sidebar {
+            width: 280px;
+            background: var(--bg-sidebar);
+            border-right: 1px solid var(--glass-border);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .folder-root {
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: var(--purple-neon);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .folder-group {
+            margin-left: 10px;
+        }
+
+        .folder-title {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            color: #666;
+            margin: 15px 0 10px 0;
+            display: block;
+        }
+
+        .nav-item {
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 5px;
+            background: transparent;
+            border: none;
+            width: 100%;
+            color: #ccc;
+            text-align: left;
+        }
+
+        .nav-item:hover {
+            background: var(--glass);
+            color: var(--purple-neon);
+            box-shadow: 0 0 15px rgba(138, 43, 226, 0.2);
+        }
+
+        .nav-item.active {
+            background: var(--purple-neon);
+            color: white;
+            box-shadow: 0 0 20px rgba(138, 43, 226, 0.4);
+        }
+
+        /* CONTEÚDO PRINCIPAL */
+        .main-content {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .glass-card {
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        /* FORMULÁRIO */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            align-items: end;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        input, select {
+            background: var(--gray-dark);
+            border: 1px solid var(--glass-border);
+            padding: 12px;
+            border-radius: 8px;
+            color: white;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: var(--purple-neon);
+            box-shadow: 0 0 10px rgba(138, 43, 226, 0.3);
+        }
+
+        .btn-add {
+            background: var(--emerald);
+            color: #000;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn-add:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(80, 200, 120, 0.4);
+        }
+
+        /* DASHBOARD GRID */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+
+        /* TABELA */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th {
+            text-align: left;
+            padding: 15px;
+            border-bottom: 1px solid var(--glass-border);
+            color: var(--purple-neon);
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.02);
+        }
+
+        .val-entrada { color: var(--emerald); font-weight: bold; }
+        .val-saida { color: var(--exit-red); font-weight: bold; }
+
+        /* ANIMAÇÃO */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .anim-fade {
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        /* SCROLLBAR */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-body); }
+        ::-webkit-scrollbar-thumb { background: var(--gray-dark); border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="folder-root">
+            <i class="fas fa-folder-open"></i> FinanceBI 2.0
+        </div>
+
+        <div class="folder-group">
+            <button class="nav-item active" onclick="showSection('overview')">
+                <i class="fas fa-chart-line"></i> Visão Geral
+            </button>
+        </div>
+
+        <span class="folder-title">Meses</span>
+        <div class="folder-group" id="monthFolders">
+            </div>
+
+        <span class="folder-title">Categorias</span>
+        <div class="folder-group" id="categoryFolders">
+            <button class="nav-item" onclick="filterCategory('Moradia')"><i class="fas fa-home"></i> Moradia</button>
+            <button class="nav-item" onclick="filterCategory('Aluguel')"><i class="fas fa-key"></i> Aluguel</button>
+            <button class="nav-item" onclick="filterCategory('Luz/Água')"><i class="fas fa-bolt"></i> Luz/Água</button>
+            <button class="nav-item" onclick="filterCategory('Internet')"><i class="fas fa-wifi"></i> Internet</button>
+        </div>
+        <button class="nav-item" onclick="addNewCategory()" style="border: 1px dashed var(--purple-neon); margin-top: 10px;">
+            <i class="fas fa-plus"></i> Nova Categoria
+        </button>
+    </aside>
+
+    <main class="main-content">
+        <header style="margin-bottom: 30px;">
+            <h1 id="pageTitle">Visão Geral</h1>
+            <p id="currentFilterLabel">Exibindo todas as transações</p>
+        </header>
+
+        <section class="glass-card">
+            <h3><i class="fas fa-plus-circle"></i> Adicionar Transação</h3>
+            <form id="financeForm" class="form-grid">
+                <div class="input-group">
+                    <label>Nome</label>
+                    <input type="text" id="desc" placeholder="Ex: Salário" required>
+                </div>
+                <div class="input-group">
+                    <label>Valor (R$)</label>
+                    <input type="number" id="amount" placeholder="0.00" step="0.01" required>
+                </div>
+                <div class="input-group">
+                    <label>Tipo</label>
+                    <select id="type">
+                        <option value="entrada">Entrada</option>
+                        <option value="saida">Saída</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Mês</label>
+                    <select id="monthSelect"></select>
+                </div>
+                <div class="input-group">
+                    <label>Categoria</label>
+                    <select id="catSelect">
+                        <option value="Moradia">Moradia</option>
+                        <option value="Aluguel">Aluguel</option>
+                        <option value="Luz/Água">Luz/Água</option>
+                        <option value="Internet">Internet</option>
+                        <option value="Outros">Outros</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-add">SALVAR</button>
+            </form>
+        </section>
+
+        <section class="dashboard-grid">
+            <div class="glass-card">
+                <h3>Fluxo de Caixa Mensal</h3>
+                <canvas id="mainChart" height="150"></canvas>
+            </div>
+            <div class="glass-card">
+                <h3>Resumo Global</h3>
+                <div style="margin-top: 20px;">
+                    <p>Entradas: <span id="totalIn" class="val-entrada">R$ 0,00</span></p>
+                    <hr style="opacity: 0.1; margin: 15px 0;">
+                    <p>Saídas: <span id="totalOut" class="val-saida">R$ 0,00</span></p>
+                    <hr style="opacity: 0.1; margin: 15px 0;">
+                    <h4>Saldo: <span id="balance">R$ 0,00</span></h4>
+                </div>
+            </div>
+        </section>
+
+        <section class="glass-card">
+            <h3>Detalhamento</h3>
+            <table id="transactionTable">
+                <thead>
+                    <tr>
+                        <th>Descrição</th>
+                        <th>Categoria</th>
+                        <th>Mês</th>
+                        <th>Valor</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    </tbody>
+            </table>
+        </section>
+    </main>
+
+    <script>
+        /* JAVASCRIPT - LOGICA DO BI */
+
+        const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+        let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
+        let myChart;
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', () => {
+            initMonths();
+            updateUI();
+            
+            document.getElementById('financeForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                saveTransaction();
+            });
+        });
+
+        function initMonths() {
+            const mFolders = document.getElementById('monthFolders');
+            const mSelect = document.getElementById('monthSelect');
+            
+            months.forEach(m => {
+                // Sidebar
+                const btn = document.createElement('button');
+                btn.className = 'nav-item';
+                btn.innerHTML = `<i class="fas fa-calendar-alt"></i> ${m}`;
+                btn.onclick = () => filterMonth(m);
+                mFolders.appendChild(btn);
+
+                // Select
+                const opt = document.createElement('option');
+                opt.value = m;
+                opt.textContent = m;
+                mSelect.appendChild(opt);
+            });
+        }
+
+        function saveTransaction() {
+            const transaction = {
+                id: Date.now(),
+                desc: document.getElementById('desc').value,
+                amount: parseFloat(document.getElementById('amount').value),
+                type: document.getElementById('type').value,
+                month: document.getElementById('monthSelect').value,
+                category: document.getElementById('catSelect').value
+            };
+
+            transactions.push(transaction);
+            localStorage.setItem('transactions', JSON.stringify(transactions));
+            document.getElementById('financeForm').reset();
+            updateUI();
+        }
+
+        function updateUI(filter = null, filterType = 'all') {
+            const tableBody = document.getElementById('tableBody');
+            tableBody.innerHTML = '';
+            
+            let filtered = transactions;
+            if (filterType === 'month') filtered = transactions.filter(t => t.month === filter);
+            if (filterType === 'category') filtered = transactions.filter(t => t.category === filter);
+
+            let tIn = 0, tOut = 0;
+
+            filtered.forEach(t => {
+                if (t.type === 'entrada') tIn += t.amount; else tOut += t.amount;
+
+                const row = document.createElement('tr');
+                row.className = 'anim-fade';
+                row.innerHTML = `
+                    <td>${t.desc}</td>
+                    <td><small style="background:var(--gray-dark); padding:4px 8px; border-radius:4px;">${t.category}</small></td>
+                    <td>${t.month}</td>
+                    <td class="${t.type === 'entrada' ? 'val-entrada' : 'val-saida'}">
+                        ${t.type === 'entrada' ? '+' : '-'} R$ ${t.amount.toFixed(2)}
+                    </td>
+                `;
+                tableBody.prepend(row);
+            });
+
+            document.getElementById('totalIn').textContent = `R$ ${tIn.toFixed(2)}`;
+            document.getElementById('totalOut').textContent = `R$ ${tOut.toFixed(2)}`;
+            document.getElementById('balance').textContent = `R$ ${(tIn - tOut).toFixed(2)}`;
+            
+            updateChart();
+        }
+
+        function filterMonth(m) {
+            document.getElementById('pageTitle').textContent = m;
+            document.getElementById('currentFilterLabel').textContent = `Filtro ativo: Mês de ${m}`;
+            updateUI(m, 'month');
+        }
+
+        function filterCategory(c) {
+            document.getElementById('pageTitle').textContent = c;
+            document.getElementById('currentFilterLabel').textContent = `Filtro ativo: Categoria ${c}`;
+            updateUI(c, 'category');
+        }
+
+        function showSection(section) {
+            document.getElementById('pageTitle').textContent = "Visão Geral";
+            document.getElementById('currentFilterLabel').textContent = `Exibindo todas as transações`;
+            updateUI();
+        }
+
+        function addNewCategory() {
+            const name = prompt("Nome da nova categoria:");
+            if (name) {
+                const select = document.getElementById('catSelect');
+                const option = document.createElement('option');
+                option.value = name;
+                option.textContent = name;
+                select.appendChild(option);
+
+                const nav = document.getElementById('categoryFolders');
+                const btn = document.createElement('button');
+                btn.className = 'nav-item';
+                btn.innerHTML = `<i class="fas fa-tag"></i> ${name}`;
+                btn.onclick = () => filterCategory(name);
+                nav.appendChild(btn);
+            }
+        }
+
+        // Gráfico BI
+        function updateChart() {
+            const ctx = document.getElementById('mainChart').getContext('2d');
+            
+            const dataIn = months.map(m => {
+                return transactions.filter(t => t.month === m && t.type === 'entrada')
+                                   .reduce((sum, t) => sum + t.amount, 0);
+            });
+
+            const dataOut = months.map(m => {
+                return transactions.filter(t => t.month === m && t.type === 'saida')
+                                   .reduce((sum, t) => sum + t.amount, 0);
+            });
+
+            if (myChart) myChart.destroy();
+
+            myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: months,
+                    datasets: [
+                        { label: 'Entradas', data: dataIn, backgroundColor: '#50c878' },
+                        { label: 'Saídas', data: dataOut, backgroundColor: '#ff4d4d' }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } },
+                        x: { grid: { display: false } }
+                    },
+                    plugins: { legend: { labels: { color: '#fff' } } }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
